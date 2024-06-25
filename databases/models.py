@@ -18,7 +18,7 @@ class QuestionAnswer(Base):
 models = {}
 
 class Import(Base):
-    __tablename__ = "flights"
+    __tablename__ = "flight"
     id = Column(Integer, primary_key=True, index=True)
     departure = Column(String, nullable=False)
     arrival = Column(String, nullable=False)
@@ -41,7 +41,7 @@ class Import(Base):
     
     
 class Ticket(Base):
-    __tablename__ = "tickets"
+    __tablename__ = "ticket"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False) #change passport number
     flight_number = Column(String, nullable=False)

@@ -30,7 +30,7 @@ async def openai(all_text: str = Form(...), db: SessionLocal = Depends(get_db)):
     
     client = AzureOpenAI(azure_endpoint=endpoint, api_key=key, api_version="2024-02-15-preview")
     conversation = [
-        {"role": "system", "content": "You are a Turkish Airlines AI assistant in Sabiha Gökçen Airport. Answer a maximum of 3 only."},
+        {"role": "system", "content": "You are a Turkish Airlines AI assistant in Sabiha Gökçen Airport."},
         # {"role": "user", "content":"I want to do check-in"},
         # {"role":"assistant","content":"Sure, I can help you with that. Please provide me your ticket number."},
         # {"role": "user", "content": "I want to reserve a ticket"},

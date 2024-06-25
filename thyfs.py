@@ -5,9 +5,16 @@ import os
 from dotenv import load_dotenv
 
 def get_fly_info_thyapi(loc_origin, loc_destination):
-    test = loc_origin
-    test2 = loc_destination
-    now_date = datetime.now().date()
+    load_dotenv()
+
+    THY_API_SECRET = os.getenv("THY_API_SECRET")
+    THY_API_KEY = os.getenv("THY_API_KEY")
+
+    if not THY_API_SECRET or not THY_API_KEY:
+        print("API secret veya key eksik.")
+        return
+
+    now_date = datetime.now().strftime("%Y-%m-%d")
     scheduleType = "W"
     url = 'https://api.turkishairlines.com/test/getTimeTable'
     values = {
@@ -26,11 +33,11 @@ def get_fly_info_thyapi(loc_origin, loc_destination):
                     "Date": f'{now_date}'
                 },
                 "OriginLocation": {
-                    "LocationCode": test,
+                    "LocationCode": loc_origin,
                     "MultiAirportCityInd": True
                 },
                 "DestinationLocation": {
-                    "LocationCode": test2,
+                    "LocationCode": loc_destination,
                     "MultiAirportCityInd": True
                 }
             },
@@ -44,19 +51,18 @@ def get_fly_info_thyapi(loc_origin, loc_destination):
     }
 
     headers = {
-        'apisecret': os.getenv("THY_API_SECRET"),
+        'apisecret': THY_API_SECRET,
         'Content-Type': 'application/json',
-        'apikey': os.getenv("THY_API_KEY")
+        'apikey': THY_API_KEY
     }
 
     response = requests.post(url, data=json.dumps(values), headers=headers)
     
-    # Check the response status code
     if response.status_code != 200:
         print(f"Error: Received status code {response.status_code}")
+        print(response.text)  # Yanıtın içeriğini yazdırma
         return []
 
-    # Check if the response content is empty
     if not response.content:
         print("Error: Received empty response")
         return []
@@ -65,7 +71,7 @@ def get_fly_info_thyapi(loc_origin, loc_destination):
         response_data = response.json()
     except json.JSONDecodeError:
         print("Error: Failed to decode JSON response")
-        print(response.text)  # Print the raw response text for debugging
+        print(response.text)  # Ham yanıt metnini yazdırma
         return []
 
     with open("response.json", "w") as f:
@@ -117,5 +123,5 @@ def get_fly_info_thyapi(loc_origin, loc_destination):
 
     return future_flights
 
-# Example usage
+# Örnek kullanım
 #get_fly_info_thyapi("IST", "IZM")
