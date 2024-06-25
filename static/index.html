@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech to Text and Text to Speech</title>
+</head>
+<body>
+    <button id="startButton">Start</button>
+    <p id="outputText"></p>
+    <script>
+        document.getElementById('startButton').addEventListener('click', async function() {
+            // Speech to Text
+            let response = await fetch('/recognize/', { method: 'POST' });
+            let data = await response.json();
+            let speechResult = data.transcript;
+            document.getElementById('outputText').textContent = speechResult;
+
+            // Text to Speech
+            let formData = new FormData();
+            formData.append('text', speechResult);
+            response = await fetch('/synthesize/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+                audio.play();
+            } else {
+                let errorData = await response.json();
+                console.error(errorData.error);
+            }
+        });
+    </script>
+</body>
+</html>

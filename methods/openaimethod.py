@@ -1,0 +1,163 @@
+from databases.database import SessionLocal
+from databases.models import Import,Ticket
+import json
+from datetime import datetime
+import dateparser
+import spacy
+import random
+
+def get_checkin_info(ticket_number):
+    """burada checkin bilgileri alınacak"""
+
+
+def get_baggage_info(ticket_number):
+    """burada bagaj bilgileri alınacak"""
+    
+def get_gate_info(ticket_number):
+    """burada gate bilgileri alınacak"""
+    
+    
+def create_seat_number(flight_number):
+    #kullanılan random sayı eğer datetime ile farklı günse kullanılabilir aksi durumda kullanılamaz ve hariç tutulur.
+    if flight_number:
+        seat_number = f'{random.randint(1, 46)}{random.choice("ABCDEF")}'
+        print (seat_number)
+        return seat_number
+
+def create_reservation_number(flight_number,seat_number):
+    reservation_number = f'{flight_number}{seat_number}{random.randint(1, 10000)}'
+    return reservation_number
+def reserve_ticket(flight_number,dep_date_time_date,name,loc_origin=None,loc_destination=None,dep_date_time_hour=None):
+    print("start reservation")
+    db = SessionLocal()
+    query = db.query(Import).filter(Import.flight_number == flight_number, Import.dep_date_time_date == dep_date_time_date)
+    
+    
+
+    print (dep_date_time_date)
+    print (flight_number)
+    
+    
+    if loc_origin is not None:
+        departure = convert_city_to_airport(loc_origin)
+        query = query.filter(Import.departure == departure)
+    if loc_destination is not None:
+        arrival = convert_city_to_airport(loc_destination)
+        query = query.filter(Import.arrival == arrival)
+    if dep_date_time_hour is not None:
+        query = query.filter(Import.dep_date_time_hour == dep_date_time_hour)
+    # if query.filter(Import.empty_seats > 0) is not None:
+    data = query.all()
+    print (data)
+    
+    
+    
+    
+    if query.count() == 0:
+        print ("no data")
+        return json.dumps({"name": name, "flight_number": flight_number, "seat_number": "unknown", "reservation_number": "unknown"})
+    #uçuş bulunamadı mesajı
+        
+        
+    seat_num = create_seat_number(flight_number)
+    res_num = create_reservation_number(flight_number,seat_num)
+    ticket = Ticket(name=name, flight_number=flight_number, seat_number=seat_num, reservation_number=res_num)
+    db.add(ticket)
+    db.commit()
+    db.refresh(ticket)
+    return json.dumps({"name": ticket.name, "flight_number": ticket.flight_number, "seat_number": ticket.seat_number, "reservation_number": ticket.reservation_number})
+        
+    
+    
+        
+def delete_reservation(reservation_number):
+    """burada rezervasyon iptali yapılacak"""
+    
+    
+    
+    
+
+    
+    
+    
+    """burada bilet rezervasyonu yapılacak"""
+    
+
+def convert_city_to_airport(airport):
+    if airport == "IST" or airport == "SAW":
+        return "IST"
+    elif airport == "LHR" or airport == "LGW" or airport == "STN":
+        return "LON"
+    elif airport == "CDG" or airport == "ORY":
+        return "PAR"
+    elif airport == "AMS":
+        return "AMS"
+    elif airport == "BER" or airport == "TXL" or airport == "SXF":
+        return "BER"
+    elif airport == "PRG":
+        return "PRG"
+    elif airport == "SVO" or airport == "DME" or airport == "VKO":
+        return "MOW"
+    elif airport == "LED":
+        return "LED"
+    elif airport == "SIN":
+        return "SIN"
+    elif airport == "SYD":
+        return "SYD"
+    elif airport == "HND" or airport == "NRT":
+        return "TYO"
+    elif airport == "KIX" or airport == "ITM":
+        return "KIX"
+    elif airport == "ICN" or airport == "GMP":
+        return "SEL"
+    elif airport == "ESB":
+        return "ANK"
+    elif airport == "ADB":
+        return "IZM"
+    elif airport == "GRZ":
+        return "GRZ"
+    elif airport == "GYD":
+        return "BAK"
+    elif airport == "FCO" or airport == "CIA":
+        return "ROM"
+    elif airport == "MXP" or airport == "LIN":
+        return "MIL"
+    else:
+        return airport  # Eşleşmeyen kodlar için varsayılan olarak IATA kodunu döndür
+        
+        
+nlp = spacy.load("en_core_web_sm")
+
+def extract_date(text):
+    doc = nlp(text)
+    dates = []
+    for ent in doc.ents:
+        if ent.label_ == "DATE":
+            parsed_date = dateparser.parse(ent.text)
+            if parsed_date:
+                dates.append(parsed_date.strftime('%Y-%m-%d'))
+    return dates[0] if dates else None
+
+def get_fly_info(loc_origin,loc_destination,dep_date_time_date= None):
+    flights = []
+    db = SessionLocal()
+    
+    
+
+    departure = convert_city_to_airport(loc_origin)
+    arrival = convert_city_to_airport(loc_destination)
+    # data = Import(departure,arrival)
+    
+    query = db.query(Import).filter(Import.departure == departure, Import.arrival == arrival)
+    
+    if dep_date_time_date is not None:
+        query = query.filter(Import.dep_date_time_date == dep_date_time_date)
+        print (dep_date_time_date)
+    data2 = query.all()
+    if not data2:
+        return json.dumps({"location": loc_origin, "destination": loc_destination, "flight_number": "unknown"})
+    else:
+        
+        for i in data2:
+            flights.append({"location": i.departure, "destination": i.arrival, "departure_date_time": i.dep_date_time_date.isoformat(),"dep_date_time_hour" : i.dep_date_time_hour.isoformat(), "departure_airport": i.dep_airport, "arrival_airport": i.arr_airport, "flight_number": i.flight_number})
+        return json.dumps(flights)
