@@ -1,0 +1,8 @@
+# .gitignore
+.env
+*.m4a
+*.mp3
+*.wav
+.venv/
+Öğelerle Yeni Klasör/
+alembic.ini
