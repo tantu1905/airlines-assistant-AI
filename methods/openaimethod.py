@@ -55,7 +55,6 @@ def reserve_ticket(flight_number,dep_date_time_date,name,loc_origin=None,loc_des
     
     if query.count() == 0:
         print ("no data")
-        
         return json.dumps({"name": name, "flight_number": flight_number, "seat_number": "unknown", "reservation_number": "unknown","message": "Flight not found"})
     #uçuş bulunamadı mesajı
         
