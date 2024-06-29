@@ -47,6 +47,8 @@ class Ticket(Base):
     flight_number = Column(String, nullable=False)
     seat_number = Column(String, nullable=False)
     reservation_number = Column(String, nullable=False)
+    dep_date_time_date = Column(Date, nullable=False)
+    # dep_date_time_hour = Column(Time, nullable=False)
     
     # sonradan bakılacak
     

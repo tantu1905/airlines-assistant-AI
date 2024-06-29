@@ -17,17 +17,44 @@ def get_gate_info(ticket_number):
     """burada gate bilgileri alınacak"""
     
     
-def create_seat_number(flight_number):
+def create_seat_number(flight_number,dep_date_time_date):
+    count = 0
+    #counter koy eğer count sayısı koltuk sayısını geçerse dolu diye döndür.
+    created = False
+    db = SessionLocal()
     #kullanılan random sayı eğer datetime ile farklı günse kullanılabilir aksi durumda kullanılamaz ve hariç tutulur.
     if flight_number:
-        seat_number = f'{random.randint(1, 46)}{random.choice("ABCDEF")}'
-        print (seat_number)
-        return seat_number
+        while created == False:
+            if count >4:
+                return json.dumps({"message": "Seat number could not be created"})
+            seat_number = f'{random.randint(1, 3)}{random.choice("A")}'
+            query = db.query(Ticket).filter(Ticket.seat_number == seat_number)
+            if query.count() == 0:
+                created = True
+                print (seat_number)
+                return seat_number
+            else:
+                query = query.filter(Ticket.flight_number == flight_number, Ticket.dep_date_time_date == dep_date_time_date)
+                #yerel uçuşlarla date bölümünü test et.
+                if query.count() == 0:
+                    created = True
+                    print (seat_number)
+                    return seat_number
+                else:
+                    print("have seat number")
+                    count += 1
+                    continue
+    #kullanılan random sayı eğer datetime ile farklı günse kullanılabilir aksi durumda kullanılamaz ve hariç tutulur.
+    # if flight_number:
+    #     seat_number = f'{random.randint(1, 46)}{random.choice("ABCDEF")}'
+    #     print (seat_number)
+    #     return seat_number
 
 def create_reservation_number(flight_number,seat_number):
     reservation_number = f'{flight_number}{seat_number}{random.randint(1, 10000)}'
     return reservation_number
 def reserve_ticket(flight_number,dep_date_time_date,name,loc_origin=None,loc_destination=None,dep_date_time_hour=None):
+    print (dep_date_time_date)
     print("start reservation")
     db = SessionLocal()
     query = db.query(Import).filter(Import.flight_number == flight_number, Import.dep_date_time_date == dep_date_time_date)
@@ -58,10 +85,17 @@ def reserve_ticket(flight_number,dep_date_time_date,name,loc_origin=None,loc_des
         return json.dumps({"name": name, "flight_number": flight_number, "seat_number": "unknown", "reservation_number": "unknown","message": "Flight not found"})
     #uçuş bulunamadı mesajı
         
+    dep_date_time_date = datetime.strptime(dep_date_time_date, "%Y-%m-%d").date()
+    try:
         
-    seat_num = create_seat_number(flight_number)
+        seat_num = create_seat_number(flight_number,dep_date_time_date)
+    except Exception as e:
+        print (e)
+        return json.dumps({"name": name, "flight_number": flight_number, "seat_number": "unknown", "reservation_number": "unknown","message": "Seat number could not be created"}) 
+    #eğer seat number oluşturulamazsa res num da oluşturulamasın ve hata versin
     res_num = create_reservation_number(flight_number,seat_num)
-    ticket = Ticket(name=name, flight_number=flight_number, seat_number=seat_num, reservation_number=res_num)
+
+    ticket = Ticket(name=name, flight_number=flight_number, seat_number=seat_num, reservation_number=res_num,dep_date_time_date=dep_date_time_date)
     db.add(ticket)
     db.commit()
     db.refresh(ticket)

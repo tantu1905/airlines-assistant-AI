@@ -21,16 +21,16 @@ executor = ThreadPoolExecutor()
 async def openai(all_text: str = Form(...), db: SessionLocal = Depends(get_db)):
     print ("test")
     result_text = ""
-    deployment_name = os.getenv('CUSTOM_MODAL')
-    key = os.getenv('AZURE_OAI_TTS_KEY')
-    endpoint = os.getenv('AZURE_OAI_TTS_ENDPOINT')
+    deployment_name = os.getenv('AZURE_OAI_DEPLOYMENT')
+    key = os.getenv('AZURE_OAI_KEY')
+    endpoint = os.getenv('AZURE_OAI_ENDPOINT')
     flights = []
     
     print (all_text)
     
     client = AzureOpenAI(azure_endpoint=endpoint, api_key=key, api_version="2024-02-15-preview")
     conversation = [
-        {"role": "system", "content": "You are a Turkish Airlines AI assistant in Sabiha Gökçen Airport."},
+        {"role": "system", "content": "You are a Turkish Airlines AI assistant in Sabiha Gökçen Airport. Answer only next 3 flights."},
         # {"role": "user", "content":"I want to do check-in"},
         # {"role":"assistant","content":"Sure, I can help you with that. Please provide me your ticket number."},
         # {"role": "user", "content": "I want to reserve a ticket"},
@@ -162,6 +162,7 @@ async def openai(all_text: str = Form(...), db: SessionLocal = Depends(get_db)):
                     model=deployment_name,
                     messages=conversation,
                     temperature=0.2,
+                    
 
 
                 )
@@ -181,6 +182,7 @@ async def openai(all_text: str = Form(...), db: SessionLocal = Depends(get_db)):
                 model=deployment_name,
                 messages=conversation,
                 temperature=0.2,
+                
 
             )
         )
