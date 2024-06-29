@@ -23,7 +23,6 @@ async def t2s(text: str = Form(...)):
     #     result_text = file.read()
     #     #file.close()
         
-    print ("test")
     """
     Galata Sarayı Humayun Mektebi adıyla da bilinen bu kurum, enderuna (saray mektebi) üst düzeyde eğitimli görevli yetiştirirdi. O yıllarda enderun, Osmanlı sarayında padişahın günlük yaşamını geçirdiği, sarayın eğitim birimlerinin, kütüphanenin, hazine odasının yer aldığı büyük bahçe içine kurulu bir kompleksti."""
 

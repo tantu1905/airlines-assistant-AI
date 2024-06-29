@@ -1,1 +1,8 @@
-I have successfully created a reservation for you on flight TK1981 from Istanbul (IST) to London (LHR) on June 28th, 2022. Your reservation number is TK19814304. However, I apologize as I couldn't assign a specific seat number for you at the moment.
+Your ticket has been successfully reserved. Here are the details:
+
+- Passenger Name: Tan Ilhan
+- Flight Number: TK1981
+- Seat Number: 10E
+- Reservation Number: TK198110E7426
+
+Please make sure to arrive at the airport on time for your flight. Have a pleasant journey!

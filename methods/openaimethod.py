@@ -26,8 +26,8 @@ def create_seat_number(flight_number,dep_date_time_date):
     if flight_number:
         while created == False:
             if count >4:
-                return json.dumps({"message": "Seat number could not be created"})
-            seat_number = f'{random.randint(1, 3)}{random.choice("A")}'
+                return "unknown"
+            seat_number = f'{random.randint(1, 46)}{random.choice("ABCDEF")}'
             query = db.query(Ticket).filter(Ticket.seat_number == seat_number)
             if query.count() == 0:
                 created = True
@@ -51,6 +51,8 @@ def create_seat_number(flight_number,dep_date_time_date):
     #     return seat_number
 
 def create_reservation_number(flight_number,seat_number):
+    #flight numberdan sonra seat numberin ilk indeksi ardından random sayılar ve 2. indeks yer alacak.
+    #rezervasyon numarası 12 haneli olacak random sayıları ona göre belirlersin ve unique olacak
     reservation_number = f'{flight_number}{seat_number}{random.randint(1, 10000)}'
     return reservation_number
 def reserve_ticket(flight_number,dep_date_time_date,name,loc_origin=None,loc_destination=None,dep_date_time_hour=None):
@@ -86,12 +88,11 @@ def reserve_ticket(flight_number,dep_date_time_date,name,loc_origin=None,loc_des
     #uçuş bulunamadı mesajı
         
     dep_date_time_date = datetime.strptime(dep_date_time_date, "%Y-%m-%d").date()
-    try:
         
-        seat_num = create_seat_number(flight_number,dep_date_time_date)
-    except Exception as e:
-        print (e)
-        return json.dumps({"name": name, "flight_number": flight_number, "seat_number": "unknown", "reservation_number": "unknown","message": "Seat number could not be created"}) 
+    seat_num = create_seat_number(flight_number,dep_date_time_date)
+    if seat_num == "unknown":
+        return json.dumps({"name": name, "flight_number": flight_number, "seat_number": "unknown", "reservation_number": "unknown","message": "Seat not found"})
+
     #eğer seat number oluşturulamazsa res num da oluşturulamasın ve hata versin
     res_num = create_reservation_number(flight_number,seat_num)
 
@@ -105,7 +106,14 @@ def reserve_ticket(flight_number,dep_date_time_date,name,loc_origin=None,loc_des
     
         
 def delete_reservation(reservation_number):
-    """burada rezervasyon iptali yapılacak"""
+    db = SessionLocal()
+    query = db.query(Ticket).filter(Ticket.reservation_number == reservation_number)
+    if query.count() == 0:
+        return json.dumps({"reservation_number": reservation_number, "message": "Reservation not found"})
+    ticket = query.first()
+    db.delete(ticket)
+    db.commit()
+    return json.dumps({"reservation_number": reservation_number, "message": "Reservation deleted"})
     
     
     

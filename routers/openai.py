@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends,Form
 from fastapi.responses import JSONResponse
 from databases.database import get_db,SessionLocal
-from methods.openaimethod import get_baggage_info,get_checkin_info,get_gate_info,get_fly_info,extract_date,reserve_ticket
+from methods.openaimethod import get_baggage_info,get_checkin_info,get_gate_info,get_fly_info,extract_date,reserve_ticket,delete_reservation
 import json
 from databases.database import SessionLocal
 from databases.models import Import,QuestionAnswer
@@ -111,7 +111,7 @@ async def openai(all_text: str = Form(...), db: SessionLocal = Depends(get_db)):
             }
         }
     ]
-    
+    #delete fonksiyonunu ekle rezervasyonu silebilsin.
     loop = asyncio.get_event_loop()
     
     
