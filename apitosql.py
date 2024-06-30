@@ -1,6 +1,6 @@
 from databases.database import SessionLocal, engine, Base
 from thyfs import get_fly_info_thyapi
-from databases.models import Import
+from databases.models import Import,Ticket
 import json
 from datetime import datetime
 
@@ -52,3 +52,9 @@ def test():
         db.close()
 
 # Run the test function
+
+
+# def capacity_control():
+#     db = SessionLocal()
+    
+#     query = db.query(Ticket)

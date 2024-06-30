@@ -1,1 +1,7 @@
-I have successfully deleted your reservation with the PNR code XMU7ZA. Is there anything else I can assist you with?
+The next 3 flights from Istanbul to London on June 30 are:
+
+1. Flight TK1989: Departure at 10:20 from Istanbul Airport (IST) and arrival at London Heathrow Airport (LHR).
+2. Flight TK1963: Departure at 10:55 from Istanbul Airport (IST) and arrival at London Gatwick Airport (LGW).
+3. Flight TK1965: Departure at 12:55 from Istanbul Airport (IST) and arrival at London Gatwick Airport (LGW).
+
+Please note that flight schedules are subject to change.

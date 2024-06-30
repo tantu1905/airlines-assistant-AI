@@ -14,8 +14,8 @@ async def t2s(text: str = Form(...)):
     
     
     client = AzureOpenAI(
-    azure_endpoint="https://whisper-test-tan-oai.openai.azure.com/",
-    api_key="31d522a434104fad8ecf983d54da4fa7",
+    azure_endpoint=os.getenv("AZURE_OAI_TTS_ENDPOINT"),
+    api_key=os.getenv("AZURE_OAI_TTS_KEY"),
     api_version="2024-02-15-preview"
     )
 
