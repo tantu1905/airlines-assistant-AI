@@ -7,3 +7,18 @@
 Öğelerle Yeni Klasör/
 alembic.ini
 path/to/venv
+asılmain.py
+asılmain2.py
+call.py
+prompt.jsonl
+response.json
+requirements.txt
+answer.txt
+answerWhisper.txt
+tts.py
+whispertest.py
+yenihulo.py
+newtest.py
+transcript.txt
+playaudio.py
+arraybuilder.py

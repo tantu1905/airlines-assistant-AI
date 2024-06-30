@@ -6,9 +6,6 @@ from enum import Enum
 from fastapi.responses import HTMLResponse
 import json
 from fastapi.staticfiles import StaticFiles
-# from newtest import record_audio_test
-# from whispertest import whisper_test
-# from tts  import tts_test
 from databases.database import SessionLocal,engine,Base
 from databases.models import QuestionAnswer
 import signal
