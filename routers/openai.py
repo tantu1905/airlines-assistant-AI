@@ -30,7 +30,7 @@ async def openai(all_text: str = Form(...), db: SessionLocal = Depends(get_db)):
     
     client = AzureOpenAI(azure_endpoint=endpoint, api_key=key, api_version="2024-02-15-preview")
     conversation = [
-        {"role": "system", "content": "You are a Turkish Airlines AI assistant in Sabiha Gökçen Airport. Answer only next 3 flights."},
+        {"role": "system", "content": "You are a Turkish Airlines AI assistant in Sabiha Gökçen Airport. Answer only next 3 flights. If delete reservation is called, pnr code delete spaces in booking code"},
         # {"role": "user", "content":"I want to do check-in"},
         # {"role":"assistant","content":"Sure, I can help you with that. Please provide me your ticket number."},
         # {"role": "user", "content": "I want to reserve a ticket"},
@@ -107,9 +107,26 @@ async def openai(all_text: str = Form(...), db: SessionLocal = Depends(get_db)):
                         },
                     },
                     "required": ["flight_number", "dep_date_time_date", "name"],
-                }
-            }
-        }
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "delete_reservation",
+                "description": "Delete a reservation",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "pnr_code": {
+                            "type": "string",
+                            "description": "The pnr_code eg. TT8UCF",
+                        },
+                    },
+                    "required": ["pnr_code"],
+                },
+            },
+        },
     ]
     #delete fonksiyonunu ekle rezervasyonu silebilsin.
     loop = asyncio.get_event_loop()
@@ -132,6 +149,7 @@ async def openai(all_text: str = Form(...), db: SessionLocal = Depends(get_db)):
         available_functions = {
             "get_fly_info": get_fly_info,
             "reserve_ticket": reserve_ticket,
+            "delete_reservation": delete_reservation,
         }
         conversation.append(response_message)
         for tool_call in tool_calls:
@@ -148,6 +166,8 @@ async def openai(all_text: str = Form(...), db: SessionLocal = Depends(get_db)):
                     flights = json.loads(function_response)
                 else:
                     function_response = function_to_call(loc_origin=function_args.get("location"), loc_destination=function_args.get("destination"))
+            elif function_name == "delete_reservation":
+                function_response = function_to_call(pnr_code=function_args.get("pnr_code"))
             conversation.append(
                 {
                     "tool_call_id": tool_call.id,

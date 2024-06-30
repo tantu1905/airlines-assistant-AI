@@ -5,6 +5,7 @@ from datetime import datetime
 import dateparser
 import spacy
 import random
+import string
 
 def get_checkin_info(ticket_number):
     """burada checkin bilgileri alınacak"""
@@ -50,10 +51,13 @@ def create_seat_number(flight_number,dep_date_time_date):
     #     print (seat_number)
     #     return seat_number
 
-def create_reservation_number(flight_number,seat_number):
+def create_reservation_number(flight_number):
     #flight numberdan sonra seat numberin ilk indeksi ardından random sayılar ve 2. indeks yer alacak.
     #rezervasyon numarası 12 haneli olacak random sayıları ona göre belirlersin ve unique olacak
-    reservation_number = f'{flight_number}{seat_number}{random.randint(1, 10000)}'
+    #üstteki unique işini yapmayı unutma.
+    characters = string.ascii_letters + string.digits
+    reservation_number = ''.join(random.choices(characters, k=6))
+    reservation_number = reservation_number.upper()
     return reservation_number
 def reserve_ticket(flight_number,dep_date_time_date,name,loc_origin=None,loc_destination=None,dep_date_time_hour=None):
     print (dep_date_time_date)
@@ -79,52 +83,41 @@ def reserve_ticket(flight_number,dep_date_time_date,name,loc_origin=None,loc_des
     data = query.all()
     print (data)
     
-    
-    
-    
     if query.count() == 0:
         print ("no data")
-        return json.dumps({"name": name, "flight_number": flight_number, "seat_number": "unknown", "reservation_number": "unknown","message": "Flight not found"})
+        return json.dumps({"name": name, "flight_number": flight_number, "seat_number": "unknown", "pnr_code": "unknown","message": "Flight not found"})
     #uçuş bulunamadı mesajı
         
     dep_date_time_date = datetime.strptime(dep_date_time_date, "%Y-%m-%d").date()
         
     seat_num = create_seat_number(flight_number,dep_date_time_date)
     if seat_num == "unknown":
-        return json.dumps({"name": name, "flight_number": flight_number, "seat_number": "unknown", "reservation_number": "unknown","message": "Seat not found"})
+        return json.dumps({"name": name, "flight_number": flight_number, "seat_number": "unknown", "pnr_code": "unknown","message": "Seat not found"})
 
     #eğer seat number oluşturulamazsa res num da oluşturulamasın ve hata versin
-    res_num = create_reservation_number(flight_number,seat_num)
+    pnr_code = create_reservation_number(flight_number)
 
-    ticket = Ticket(name=name, flight_number=flight_number, seat_number=seat_num, reservation_number=res_num,dep_date_time_date=dep_date_time_date)
+    ticket = Ticket(name=name, flight_number=flight_number, seat_number=seat_num, pnr_code=pnr_code,dep_date_time_date=dep_date_time_date)
     db.add(ticket)
     db.commit()
     db.refresh(ticket)
-    return json.dumps({"name": ticket.name, "flight_number": ticket.flight_number, "seat_number": ticket.seat_number, "reservation_number": ticket.reservation_number})
+    return json.dumps({"name": ticket.name, "flight_number": ticket.flight_number, "seat_number": ticket.seat_number, "pnr_code": ticket.pnr_code})
         
     
     
         
-def delete_reservation(reservation_number):
+def delete_reservation(pnr_code):
     db = SessionLocal()
-    query = db.query(Ticket).filter(Ticket.reservation_number == reservation_number)
+    pnr_code = pnr_code.replace(" ", "")
+    pnr_code = pnr_code.upper()
+    print (pnr_code)
+    query = db.query(Ticket).filter(Ticket.pnr_code == pnr_code)
     if query.count() == 0:
-        return json.dumps({"reservation_number": reservation_number, "message": "Reservation not found"})
+        return json.dumps({"pnr_code": pnr_code, "message": "Reservation not found"})
     ticket = query.first()
     db.delete(ticket)
     db.commit()
-    return json.dumps({"reservation_number": reservation_number, "message": "Reservation deleted"})
-    
-    
-    
-    
-
-    
-    
-    
-    """burada bilet rezervasyonu yapılacak"""
-    
-
+    return json.dumps({"pnr_code": pnr_code, "message": "Reservation deleted"})
 def convert_city_to_airport(airport):
     if airport == "IST" or airport == "SAW":
         return "IST"
@@ -184,7 +177,7 @@ def get_fly_info(loc_origin,loc_destination,dep_date_time_date= None):
     flights = []
     db = SessionLocal()
     
-    
+    #alembic ile devam edilecek.
 
     departure = convert_city_to_airport(loc_origin)
     arrival = convert_city_to_airport(loc_destination)

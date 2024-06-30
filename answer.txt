@@ -1,8 +1,1 @@
-Your ticket has been successfully reserved. Here are the details:
-
-- Passenger Name: Tan Ilhan
-- Flight Number: TK1981
-- Seat Number: 10E
-- Reservation Number: TK198110E7426
-
-Please make sure to arrive at the airport on time for your flight. Have a pleasant journey!
+I have successfully deleted your reservation with the PNR code XMU7ZA. Is there anything else I can assist you with?

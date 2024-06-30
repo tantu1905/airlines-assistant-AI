@@ -30,6 +30,7 @@ class Import(Base):
     flight_number = Column(String, nullable=False)
     
     #eklenecekler aşağıda
+    #bunları ekleyip bilet oluştururlduğunda azaltma ve arttırma işlemleri yapılacak.
     #capacity = Column(Integer, nullable=False)
     #empty_seats = Column(Integer, nullable=False)
     
@@ -46,11 +47,13 @@ class Ticket(Base):
     name = Column(String, nullable=False) #change passport number
     flight_number = Column(String, nullable=False)
     seat_number = Column(String, nullable=False)
-    reservation_number = Column(String, nullable=False)
+    pnr_code = Column(String, nullable=False)
     dep_date_time_date = Column(Date, nullable=False)
     # dep_date_time_hour = Column(Time, nullable=False)
     
     # sonradan bakılacak
+    
+
     
     # flights = relationship("Import", back_populates="tickets")
     
