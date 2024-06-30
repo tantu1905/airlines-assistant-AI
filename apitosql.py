@@ -1,6 +1,6 @@
 from databases.database import SessionLocal, engine, Base
 from thyfs import get_fly_info_thyapi
-from databases.models import Import,Ticket
+from databases.models import Import,Ticket,QuestionAnswer
 import json
 from datetime import datetime
 
@@ -58,3 +58,12 @@ def test():
 #     db = SessionLocal()
     
 #     query = db.query(Ticket)
+
+def reset_qa():
+    db = SessionLocal()
+    try:
+        db.query(QuestionAnswer).delete()
+        db.commit()
+        print('Deleted all records from QA table')
+    finally:
+        db.close()

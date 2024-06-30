@@ -16,7 +16,7 @@ from databases.database import SessionLocal,engine,Base
 from apscheduler.schedulers.background import BackgroundScheduler,BlockingScheduler
 from sqlalchemy import MetaData,Table
 from contextlib import asynccontextmanager
-from apitosql import test
+from apitosql import test,reset_qa
 from databases.database import get_db
 from routers import webpage,s2t,t2s,openai
 
@@ -24,8 +24,9 @@ scheduler = BackgroundScheduler()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if not scheduler.running:
-        # scheduler.add_job(test, 'interval', seconds=900,next_run_time=datetime.now())  
-        # scheduler.start()
+        scheduler.add_job(test, 'interval', seconds=900,next_run_time=datetime.now())  
+        scheduler.add_job(reset_qa, 'interval', seconds=900,next_run_time=datetime.now())
+        scheduler.start()
         yield
     else:
         print("Scheduler is already running.")
