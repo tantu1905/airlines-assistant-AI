@@ -89,19 +89,19 @@ async def s2t():
         
         #controlLanguage(select)
 
-        autodetect = speechsdk.AutoDetectSourceLanguageConfig(languages=["en-US", "tr-TR"])
-        # speechsdk.languageconfig.SourceLanguageConfig("en-US", os.getenv('AZURE_SPEECH_ID_EN'))
-        en_language_config = speechsdk.languageconfig.SourceLanguageConfig("en-US", os.getenv('AZURE_SPEECH_ID_EN'))
-        tr_language_config = speechsdk.languageconfig.SourceLanguageConfig("tr-TR", os.getenv('AZURE_SPEECH_ID_TR'))
-        auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(sourceLanguageConfigs=[en_language_config, tr_language_config])
+        # autodetect = speechsdk.AutoDetectSourceLanguageConfig(languages=["en-US", "tr-TR"])
+        speechsdk.languageconfig.SourceLanguageConfig("en-US", os.getenv('AZURE_SPEECH_ID_EN'))
+        # en_language_config = speechsdk.languageconfig.SourceLanguageConfig("en-US", os.getenv('AZURE_SPEECH_ID_EN'))
+        # tr_language_config = speechsdk.languageconfig.SourceLanguageConfig("tr-TR", os.getenv('AZURE_SPEECH_ID_TR'))
+        # auto_detect_source_language_config = speechsdk.languageconfig.AutoDetectSourceLanguageConfig(sourceLanguageConfigs=[en_language_config, tr_language_config])
         
         #OTOMATİK DİL TANIMA İŞİNİ YAPIP ARDINDAN ONA GÖRE TEXT TO SPEECH'İ SEÇTİR.
         
         audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
         
-        speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config, auto_detect_source_language_config=auto_detect_source_language_config)
+        # speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config, auto_detect_source_language_config=auto_detect_source_language_config)
         
-        # speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
+        speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
         
         
         done = False
