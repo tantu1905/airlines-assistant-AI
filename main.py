@@ -24,9 +24,9 @@ scheduler = BackgroundScheduler()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if not scheduler.running:
-        scheduler.add_job(test, 'interval', seconds=900,next_run_time=datetime.now())  
-        scheduler.add_job(reset_qa, 'interval', seconds=900,next_run_time=datetime.now())
-        scheduler.start()
+        # scheduler.add_job(test, 'interval', seconds=900,next_run_time=datetime.now())  
+        # scheduler.add_job(reset_qa, 'interval', seconds=86400,next_run_time=datetime.now())
+        # scheduler.start()
         yield
     else:
         print("Scheduler is already running.")
