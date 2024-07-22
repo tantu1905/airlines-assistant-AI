@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+openai
+python-dotenv
+azure-cognitiveservices-speech
+sqlalchemy
+pydantic
+requests
+SpeechRecognition
+langdetect
+APScheduler
+dateparser
+spacy
+pyaudio

@@ -1,0 +1,31 @@
+# .gitignore
+.env
+*.m4a
+*.mp3
+*.wav
+*.zip
+*.pyc
+.venv/
+Öğelerle Yeni Klasör/
+alembic.ini
+path/to/venv/
+migrations/
+asılmain.py
+asılmain2.py
+call.py
+prompt.jsonl
+response.json
+answer.txt
+answerWhisper.txt
+tts.py
+recorded_audio.webm
+whispertest.py
+yenihulo.py
+newtest.py
+transcript.txt
+playaudio.py
+arraybuilder.py
+__pycache__/
+Dockerfile
+*.db
+requirementsTest.txt

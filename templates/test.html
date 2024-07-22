@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            background-color: #1a171b;
+            color: white;
+            font-family: Arial, sans-serif;
+            align-items: center;
+            margin-left: 20px;
+        }
+        h1 {
+            color: white;
+        }
+        ul {
+            padding: 0;
+            list-style-type: none;
+        }
+        input[type="text"] {
+            width: 50%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid lightgray;
+        }
+        button {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid lightgray;
+            background-color: white;
+            color: black;
+            cursor: pointer;
+        }
+        img {
+            width: 500px;
+            height: 200px;
+            margin-right: 10px;
+            margin-left: 10px;
+        }
+        .openai-message {
+            background: white;
+            color: black;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            border-left: 5px solid blue;
+        }
+        .user-message {
+            background: lightgray;
+            color: black;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            border-left: 5px solid green;
+        }
+        .flight-item {
+            background: white;
+            color: black;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            border-left: 5px solid red;
+        }
+    </style>
+    <title>Chat Interface</title>
+</head>
+<body>
+    <img src="./static/thy4.png" alt="Logo">
+    <ul id='messages'></ul>
+    <ul id='flights'></ul>
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let stream;
+        let audioContext;
+        let analyser;
+        let dataArray;
+        let silenceThreshold = -20; // Ses seviyesi eşik değeri (dB)
+        let silenceDuration = 3000; // Sessizlik süresi (ms)
+        let silenceCounter = 0;
+        let silenceLimit = silenceDuration / 10;
+
+        async function startVoiceRecognition() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                source.connect(analyser);
+                analyser.fftSize = 2048;
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Float32Array(bufferLength);
+
+                detectSound();
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+            }
+        }
+
+        function detectSound() {
+            analyser.getFloatTimeDomainData(dataArray);
+
+            let sum = 0.0;
+            for (let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i] * dataArray[i];
+            }
+            let rms = Math.sqrt(sum / dataArray.length);
+            let dB = 20 * Math.log10(rms);
+
+            if (dB > silenceThreshold) {
+                if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                    startRecording();
+                    console.log("Recording started");
+                }
+                silenceCounter = 0;
+            } else {
+                if (mediaRecorder && mediaRecorder.state === "recording") {
+                    silenceCounter++;
+                    if (silenceCounter > silenceLimit) {
+                        stopRecording();
+                        console.log("Recording stopped");
+                        silenceCounter = 0;
+                    }
+                }
+            }
+
+            requestAnimationFrame(detectSound);
+        }
+
+        async function startRecording() {
+            audioChunks = [];
+            let options = { mimeType: 'audio/wav' };
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                options = { mimeType: 'audio/ogg; codecs=opus' };
+            }
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                options = { mimeType: 'audio/wav' };
+            }
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                options = {};
+            }
+
+            mediaRecorder = new MediaRecorder(stream, options);
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                console.log("Recorder stopped");
+                const audioBlob = new Blob(audioChunks, { type: options.mimeType || 'audio/webm' });
+                sendAudioToServer(audioBlob);
+                // stream.getTracks().forEach(track => track.stop()); // Stop all tracks if needed
+            };
+
+            mediaRecorder.start();
+            console.log("Recording started with MIME type:", options.mimeType);
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+                console.log("Recording stopped");
+            }
+        }
+
+        function sendAudioToServer(audioBlob) {
+            const formData = new FormData();
+            formData.append('file', audioBlob, 'recording.webm');
+            console.log("Sending audio to server");
+
+            fetch('/s2t', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Server response:", data);
+                var transcript = data.transcript;
+                addMessage('user-message', transcript);
+                return processOpenAI(transcript);
+            })
+            .then(responseData => {
+                console.log("OpenAI Response:", responseData);
+                displayFlights(responseData.flights);  // Use flight data from the response
+                return processT2S(responseData.response);  // Send the response text to T2S
+            })
+            .then(() => {
+                console.log("T2S complete");
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function sendMessage(event) {
+            event.preventDefault();
+            var input = document.getElementById("messageText");
+            var text = input.value;
+            input.value = '';
+            processOpenAI(text).then(responseData => {
+                displayFlights(responseData.flights);
+                return processT2S(responseData.response);
+            });
+        }
+
+        function processOpenAI(text) {
+            return fetch('/openai', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'all_text': text,
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var responseText = data.response;
+                var flights = data.flights; // Uçuş bilgilerini al
+                addMessage('openai-message', responseText);
+                displayFlights(flights);  // Uçuş bilgilerini görüntüle
+                return { response: responseText, flights: flights }; // Yanıt metnini ve uçuş bilgilerini döndür
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function processT2S(text) {
+            return fetch('/t2s', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'text': text,
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.error);
+                    });
+                }
+            })
+            .then(blob => {
+                var url = URL.createObjectURL(blob);
+                var audio = new Audio(url);
+                audio.play();
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function addMessage(className, text) {
+            var messages = document.getElementById('messages');
+            var message = document.createElement('li');
+            message.className = className;
+            var content = document.createTextNode(text);
+            message.appendChild(content);
+            messages.appendChild(message);
+        }
+
+        function displayFlights(flights) {
+            var flightList = document.getElementById('flights');
+            flightList.innerHTML = '';  // Listeyi temizle
+
+            flights.forEach(flight => {
+                var listItem = document.createElement('li');
+                listItem.className = 'flight-item';
+                listItem.innerHTML = `
+                    <h2>Flight Number: ${flight.flight_number}</h2>
+                    <p><strong>Departure Airport:</strong> ${flight.departure_airport}</p>
+                    <p><strong>Arrival Airport:</strong> ${flight.arrival_airport}</p>
+                    <p><strong>Departure Time:</strong> ${flight.dep_date_time_hour}</p>
+                `;
+                flightList.appendChild(listItem);
+            });
+        }
+
+        startVoiceRecognition(); // Ses tanımayı başlatmak için fonksiyonu çağır
+
+    </script>
+</body>
+</html>
