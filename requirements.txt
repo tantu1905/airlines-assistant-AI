@@ -11,4 +11,3 @@ langdetect
 APScheduler
 dateparser
 spacy
-pyaudio
