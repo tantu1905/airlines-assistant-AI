@@ -1,4 +1,4 @@
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     AZURE_SPEECH_KEY: str
@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     DATABASE_NAME: str
     DATABASE_USER: str
     DATABASE_PASSWORD: str
-    # DATABASE_URL: str = "sqlite:///./test.db"
+    DATABASE_URL: str
 
 with open ("config.json", "r") as f:
     config = json.load(f)
