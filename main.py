@@ -11,7 +11,6 @@ from databases.models import QuestionAnswer
 import signal
 from thyfs import get_fly_info_thyapi
 from datetime import datetime
-from arraybuilder import build_array
 from databases.database import SessionLocal,engine,Base
 from apscheduler.schedulers.background import BackgroundScheduler,BlockingScheduler
 from sqlalchemy import MetaData,Table
