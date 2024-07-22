@@ -12,3 +12,4 @@ APScheduler
 dateparser
 spacy
 pydub
+pydantic-settings
