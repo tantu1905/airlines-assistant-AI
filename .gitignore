@@ -22,6 +22,9 @@ recorded_audio.webm
 whispertest.py
 yenihulo.py
 newtest.py
+mytest.py
+speechlanguagetest.py
+openaitest.py
 transcript.txt
 playaudio.py
 arraybuilder.py

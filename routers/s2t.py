@@ -5,6 +5,7 @@ import speech_recognition as sr
 from dotenv import load_dotenv
 import os
 import logging
+from config import settings
 
 load_dotenv()
 
@@ -15,8 +16,8 @@ logging.basicConfig(level=logging.INFO)
 @router.post("/s2t", response_class=JSONResponse)
 async def s2t(file: UploadFile = File(...)):
     recognizer = sr.Recognizer()
-    key = os.getenv("AZURE_SPEECH_KEY")
-    location = os.getenv("AZURE_SPEECH_REGION")
+    key = settings.AZURE_SPEECH_KEY
+    location = settings.AZURE_SPEECH_REGION
     lang = [
         "en-US", "tr-TR", "de-DE", "es-ES", "fr-FR",
         "it-IT", "ja-JP", "ko-KR", "pt-BR", "ru-RU", "zh-CN"

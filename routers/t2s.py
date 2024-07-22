@@ -6,6 +6,7 @@ import azure.cognitiveservices.speech as speechsdk
 from openai import AzureOpenAI
 from pathlib import Path
 from typing import Generator
+from config import settings
 
 router = APIRouter()
 
@@ -14,8 +15,8 @@ async def t2s(text: str = Form(...)):
     
     
     client = AzureOpenAI(
-    azure_endpoint=os.getenv("AZURE_OAI_TTS_ENDPOINT"),
-    api_key=os.getenv("AZURE_OAI_TTS_KEY"),
+    azure_endpoint=settings.AZURE_OAI_TTS_ENDPOINT,
+    api_key=settings.AZURE_OAI_TTS_KEY,
     api_version="2024-02-15-preview"
     )
 

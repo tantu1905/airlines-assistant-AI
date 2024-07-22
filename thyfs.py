@@ -3,12 +3,13 @@ import json
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+from config import settings
 
 def get_fly_info_thyapi(loc_origin, loc_destination):
     load_dotenv()
 
-    THY_API_SECRET = os.getenv("THY_API_SECRET")
-    THY_API_KEY = os.getenv("THY_API_KEY")
+    THY_API_SECRET = settings.THY_API_SECRET
+    THY_API_KEY = settings.THY_API_KEY
 
     if not THY_API_SECRET or not THY_API_KEY:
         print("API secret veya key eksik.")

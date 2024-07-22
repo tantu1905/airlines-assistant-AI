@@ -9,7 +9,7 @@ import os
 from openai import AzureOpenAI
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
-
+from config import settings
 
 
 router = APIRouter()
@@ -21,9 +21,9 @@ executor = ThreadPoolExecutor()
 async def openai(all_text: str = Form(...), db: SessionLocal = Depends(get_db)):
     print ("test")
     result_text = ""
-    deployment_name = os.getenv('AZURE_OAI_DEPLOYMENT')
-    key = os.getenv('AZURE_OAI_KEY')
-    endpoint = os.getenv('AZURE_OAI_ENDPOINT')
+    deployment_name = settings.AZURE_OAI_DEPLOYMENT
+    key = settings.AZURE_OAI_KEY
+    endpoint = settings.AZURE_OAI_ENDPOINT
     flights = []
     
     print (all_text)
