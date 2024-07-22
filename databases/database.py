@@ -6,8 +6,7 @@ from urllib.parse import quote_plus
 
 conn = f"""{settings.DATABASE_URL}"""
 params = quote_plus(conn)
-SQLALCHEMY_DATABASE_URL = f"mssql+pyodbc:///?odbc_connect={params}"
-
+conn_str = f"mssql+pyodbc:///?autocommit=true&odbc_connect={params}"
 
 
 

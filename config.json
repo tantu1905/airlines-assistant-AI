@@ -21,5 +21,5 @@
     "DATABASE_NAME": "ai-airline",
     "DATABASE_USER": "tantu1905",
     "DATABASE_PASSWORD": "tan2001ekinT",
-    "DATABASE_URL" : "Driver={ODBC Driver 18 for SQL Server};Server=tcp:ai-airline.database.windows.net,1433;Database=ai-airline;Uid=tantu1905;Pwd={your_password_here};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+    "DATABASE_URL" : "Driver={ODBC Driver 18 for SQL Server};Server=tcp:ai-airline.database.windows.net,1433;Database=ai-airline;Uid=tantu1905;Pwd=tan2001ekinT;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
 }
