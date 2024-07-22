@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-
+import json
 class Settings(BaseSettings):
     AZURE_SPEECH_KEY: str
     AZURE_SPEECH_REGION: str
