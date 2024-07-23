@@ -11,6 +11,5 @@ langdetect
 APScheduler
 dateparser
 spacy
-pydub
 pydantic_settings
 pyodbc

@@ -1,12 +1,12 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
-from pydub import AudioSegment
 import speech_recognition as sr
 from dotenv import load_dotenv
 import os
 import logging
 from config import settings
 
+load_dotenv()
 
 router = APIRouter()
 
@@ -15,8 +15,8 @@ logging.basicConfig(level=logging.INFO)
 @router.post("/s2t", response_class=JSONResponse)
 async def s2t(file: UploadFile = File(...)):
     recognizer = sr.Recognizer()
-    key = "82ec2b350e4f4cf5a4f865acc6ffda1d" #buraya bakılacak.
-    location = "swedencentral"
+    key = settings.AZURE_SPEECH_KEY
+    location = settings.AZURE_SPEECH_REGION
     lang = [
         "en-US", "tr-TR", "de-DE", "es-ES", "fr-FR",
         "it-IT", "ja-JP", "ko-KR", "pt-BR", "ru-RU", "zh-CN"
@@ -35,17 +35,8 @@ async def s2t(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="Error saving uploaded file")
 
     try:
-        # Convert webm to wav
-        audio = AudioSegment.from_file(file_location)
-        audio.export("temp_audio.wav", format="wav")
-        logging.info("File converted from webm to wav")
-    except Exception as e:
-        logging.error(f"Error converting file: {e}")
-        raise HTTPException(status_code=500, detail="Error converting file")
-
-    try:
         # Recognize speech using Azure
-        with sr.AudioFile("temp_audio.wav") as source:
+        with sr.AudioFile(file_location) as source:
             audio_data = recognizer.record(source)
             for language in lang:
                 try:
@@ -58,13 +49,15 @@ async def s2t(file: UploadFile = File(...)):
                     logging.error(f"RequestError: {e}")
                     text = None
 
-                if text and text[1] > 0.70:
-                    words = text[0].split()
-                    if len(words) >= 3:
-                        return JSONResponse(content={"transcript": text[0]})
-                elif text and text[1] > countConf:
-                    countConf = text[1]
-                    final_text = text
+                if text:
+                    logging.info(f"Confidence: {text[1]}")
+                    if text[1] > 0.70:
+                        words = text[0].split()
+                        if len(words) >= 3:
+                            return JSONResponse(content={"transcript": text[0]})
+                    elif text and text[1] > countConf:
+                        countConf = text[1]
+                        final_text = text
 
         return JSONResponse(content={"transcript": final_text[0] if final_text else "Null"})
     except Exception as e:

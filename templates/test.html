@@ -67,37 +67,54 @@
 </head>
 <body>
     <img src="./static/thy4.png" alt="Logo">
+    <button id="startBtn">Start Voice Detection</button>
     <ul id='messages'></ul>
     <ul id='flights'></ul>
     <script>
+        let audioContext;
+        let mediaStream;
         let mediaRecorder;
         let audioChunks = [];
-        let stream;
-        let audioContext;
         let analyser;
         let dataArray;
         let silenceThreshold = -20; // Ses seviyesi eşik değeri (dB)
         let silenceDuration = 3000; // Sessizlik süresi (ms)
         let silenceCounter = 0;
-        let silenceLimit = silenceDuration / 10;
+        let silenceLimit = silenceDuration / 30;
 
-        async function startVoiceRecognition() {
+        document.getElementById('startBtn').addEventListener('click', async () => {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
+                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioContext.createMediaStreamSource(stream);
+                const source = audioContext.createMediaStreamSource(mediaStream);
                 analyser = audioContext.createAnalyser();
                 source.connect(analyser);
                 analyser.fftSize = 2048;
-                const bufferLength = analyser.frequencyBinCount;
+                const bufferLength = analyser.fftSize;
                 dataArray = new Float32Array(bufferLength);
 
                 detectSound();
+
+                mediaRecorder = new MediaRecorder(mediaStream);
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    console.log("Recorder stopped");
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    audioChunks = []; // Clear audioChunks for next recording
+                    const arrayBuffer = await audioBlob.arrayBuffer();
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    const resampledBuffer = await resampleAudioBuffer(audioBuffer, 44100);
+                    const wavBlob = audioBufferToWavBlob(resampledBuffer);
+                    sendAudioToServer(wavBlob);
+                };
+
             } catch (error) {
                 console.error('Error accessing microphone:', error);
             }
-        }
+        });
 
         function detectSound() {
             analyser.getFloatTimeDomainData(dataArray);
@@ -111,7 +128,8 @@
 
             if (dB > silenceThreshold) {
                 if (!mediaRecorder || mediaRecorder.state === "inactive") {
-                    startRecording();
+                    audioChunks = []; // Clear audioChunks for new recording
+                    mediaRecorder.start();
                     console.log("Recording started");
                 }
                 silenceCounter = 0;
@@ -119,7 +137,7 @@
                 if (mediaRecorder && mediaRecorder.state === "recording") {
                     silenceCounter++;
                     if (silenceCounter > silenceLimit) {
-                        stopRecording();
+                        mediaRecorder.stop();
                         console.log("Recording stopped");
                         silenceCounter = 0;
                     }
@@ -129,46 +147,78 @@
             requestAnimationFrame(detectSound);
         }
 
-        async function startRecording() {
-            audioChunks = [];
-            let options = { mimeType: 'audio/wav' };
-            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                options = { mimeType: 'audio/ogg; codecs=opus' };
-            }
-            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                options = { mimeType: 'audio/wav' };
-            }
-            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                options = {};
-            }
+        function resampleAudioBuffer(audioBuffer, targetSampleRate) {
+            const offlineContext = new OfflineAudioContext(
+                audioBuffer.numberOfChannels,
+                audioBuffer.duration * targetSampleRate,
+                targetSampleRate
+            );
 
-            mediaRecorder = new MediaRecorder(stream, options);
+            const bufferSource = offlineContext.createBufferSource();
+            bufferSource.buffer = audioBuffer;
+            bufferSource.connect(offlineContext.destination);
+            bufferSource.start(0);
 
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
-
-            mediaRecorder.onstop = () => {
-                console.log("Recorder stopped");
-                const audioBlob = new Blob(audioChunks, { type: options.mimeType || 'audio/webm' });
-                sendAudioToServer(audioBlob);
-                // stream.getTracks().forEach(track => track.stop()); // Stop all tracks if needed
-            };
-
-            mediaRecorder.start();
-            console.log("Recording started with MIME type:", options.mimeType);
+            return offlineContext.startRendering();
         }
 
-        function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state === "recording") {
-                mediaRecorder.stop();
-                console.log("Recording stopped");
+        function audioBufferToWavBlob(audioBuffer) {
+            const numberOfChannels = audioBuffer.numberOfChannels;
+            const length = audioBuffer.length * numberOfChannels * 2 + 44;
+            const buffer = new ArrayBuffer(length);
+            const view = new DataView(buffer);
+
+            function writeString(view, offset, string) {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
             }
+
+            let offset = 0;
+
+            // RIFF identifier
+            writeString(view, offset, 'RIFF'); offset += 4;
+            // RIFF chunk length
+            view.setUint32(offset, 36 + audioBuffer.length * numberOfChannels * 2, true); offset += 4;
+            // RIFF type
+            writeString(view, offset, 'WAVE'); offset += 4;
+            // format chunk identifier
+            writeString(view, offset, 'fmt '); offset += 4;
+            // format chunk length
+            view.setUint32(offset, 16, true); offset += 4;
+            // sample format (raw)
+            view.setUint16(offset, 1, true); offset += 2;
+            // channel count
+            view.setUint16(offset, numberOfChannels, true); offset += 2;
+            // sample rate
+            view.setUint32(offset, audioBuffer.sampleRate, true); offset += 4;
+            // byte rate (sample rate * block align)
+            view.setUint32(offset, audioBuffer.sampleRate * numberOfChannels * 2, true); offset += 4;
+            // block align (channel count * bytes per sample)
+            view.setUint16(offset, numberOfChannels * 2, true); offset += 2;
+            // bits per sample
+            view.setUint16(offset, 16, true); offset += 2;
+            // data chunk identifier
+            writeString(view, offset, 'data'); offset += 4;
+            // data chunk length
+            view.setUint32(offset, audioBuffer.length * numberOfChannels * 2, true); offset += 4;
+
+            // write the PCM samples
+            for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+                const channelData = audioBuffer.getChannelData(i);
+                for (let j = 0; j < channelData.length; j++) {
+                    const sample = Math.max(-1, Math.min(1, channelData[j]));
+                    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                    offset += 2;
+                }
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
         }
 
         function sendAudioToServer(audioBlob) {
             const formData = new FormData();
-            formData.append('file', audioBlob, 'recording.webm');
+            formData.append('file', audioBlob, 'recording.wav');
             console.log("Sending audio to server");
 
             fetch('/s2t', {
@@ -193,14 +243,29 @@
             .catch(error => console.error('Error:', error));
         }
 
-        function sendMessage(event) {
-            event.preventDefault();
-            var input = document.getElementById("messageText");
-            var text = input.value;
-            input.value = '';
-            processOpenAI(text).then(responseData => {
-                displayFlights(responseData.flights);
-                return processT2S(responseData.response);
+        function addMessage(className, text) {
+            var messages = document.getElementById('messages');
+            var message = document.createElement('li');
+            message.className = className;
+            var content = document.createTextNode(text);
+            message.appendChild(content);
+            messages.appendChild(message);
+        }
+
+        function displayFlights(flights) {
+            var flightList = document.getElementById('flights');
+            flightList.innerHTML = '';  // Listeyi temizle
+
+            flights.forEach(flight => {
+                var listItem = document.createElement('li');
+                listItem.className = 'flight-item';
+                listItem.innerHTML = `
+                    <h2>Flight Number: ${flight.flight_number}</h2>
+                    <p><strong>Departure Airport:</strong> ${flight.departure_airport}</p>
+                    <p><strong>Arrival Airport:</strong> ${flight.arrival_airport}</p>
+                    <p><strong>Departure Time:</strong> ${flight.dep_date_time_hour}</p>
+                `;
+                flightList.appendChild(listItem);
             });
         }
 
@@ -251,35 +316,6 @@
             })
             .catch(error => console.error('Error:', error));
         }
-
-        function addMessage(className, text) {
-            var messages = document.getElementById('messages');
-            var message = document.createElement('li');
-            message.className = className;
-            var content = document.createTextNode(text);
-            message.appendChild(content);
-            messages.appendChild(message);
-        }
-
-        function displayFlights(flights) {
-            var flightList = document.getElementById('flights');
-            flightList.innerHTML = '';  // Listeyi temizle
-
-            flights.forEach(flight => {
-                var listItem = document.createElement('li');
-                listItem.className = 'flight-item';
-                listItem.innerHTML = `
-                    <h2>Flight Number: ${flight.flight_number}</h2>
-                    <p><strong>Departure Airport:</strong> ${flight.departure_airport}</p>
-                    <p><strong>Arrival Airport:</strong> ${flight.arrival_airport}</p>
-                    <p><strong>Departure Time:</strong> ${flight.dep_date_time_hour}</p>
-                `;
-                flightList.appendChild(listItem);
-            });
-        }
-
-        startVoiceRecognition(); // Ses tanımayı başlatmak için fonksiyonu çağır
-
     </script>
 </body>
 </html>
