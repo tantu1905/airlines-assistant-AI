@@ -7,7 +7,6 @@ import os
 import logging
 from config import settings
 
-load_dotenv()
 
 router = APIRouter()
 
@@ -16,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 @router.post("/s2t", response_class=JSONResponse)
 async def s2t(file: UploadFile = File(...)):
     recognizer = sr.Recognizer()
-    key = settings.AZURE_SPEECH_KEY
+    key = settings.AZURE_SPEECH_KEY #buraya bakılacak.
     location = settings.AZURE_SPEECH_REGION
     lang = [
         "en-US", "tr-TR", "de-DE", "es-ES", "fr-FR",
