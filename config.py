@@ -25,6 +25,4 @@ class Settings(BaseSettings):
     DATABASE_PASSWORD: str
     DATABASE_URL: str
 
-with open ("config.json", "r") as f:
-    config = json.load(f)
-settings = Settings(**config)
+settings = Settings()
